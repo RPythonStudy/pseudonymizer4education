@@ -15,17 +15,9 @@ date-modified: last-modified
 
 - 이 프로젝트는 data/raw 디렉토리에 에시 판독보고서가 들어 있다고 가정하고 있습니다. 하지만 git 버전관리에서는 제외시켜 두었기 때문에 github에서 프로젝트를 다운로드 하더라도 다운로드 되지 않습니다.
 - 연구회에서 분석목적으로 보유한 예시 파일들이 data/raw에 복사된 경우라면 아래과 같이 진행이 가능합니다.
-- list.files 함수로 파일이름들을 리스트로 가져옵니다. (프로젝트에서는 파일명이 등록번호로 구성되어 있다고 가정합니다.) 
-- 파일이름 리스트에서 ::file_path_sans_ext 함수를 이용해서 확장자를 제거한 후, register_numbers라는 문자형 벡터(character vector)로 생성합니다.
 
-```{r}
-#| label: path
 
-file_list <- list.files("data/raw", pattern = "\\.txt$")
-register_numbers <- tools::file_path_sans_ext(file_list)
-```
-
-### 파일이름 가명화
+### 가명화 패키지
 
 - 이 프로젝트에서는 가명화 방식으로 가역적이며 일관성을 보장하는 가명화(reversible deterministic pseudonymization)를 채택하였습니다.
 - 이를 위해 원본 형식을 유지하는 형식보존암호화(format-preserving encryption)를 적용하였으며, 미국 NIST에서 권장하는 FF1 알고리즘을 구현한 pyffx 파이썬 패키지를 활용하였습니다.
@@ -168,8 +160,6 @@ head(df_pseudo)
 
 
 ```
-
-
 
 
 
