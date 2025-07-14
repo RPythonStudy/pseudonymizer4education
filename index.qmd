@@ -25,14 +25,17 @@ date-modified: last-modified
 -   파이썬 가상환경의 설치는 연구회 웹사이트 해당부분을 참고하시길 바랍니다. (https://rpythonstudy.github.io/website/posts/Python/install/VSCode_setup.html)
 
 ```{r}
-#| label: excel_column_pseudonymizer
-
 #| label: excel_column_pseudonymizer_simple
 
 excel_column_pseudonymizer_simple <- function(
   excel_path,
   columns          # 가명화할 컬럼명 벡터 (예: c("등록번호", "환자명"))
 ) {
+  # 필요한 패키지 불러오기
+  if (!requireNamespace("readxl", quietly = TRUE)) install.packages("readxl")
+  if (!requireNamespace("writexl", quietly = TRUE)) install.packages("writexl")
+  if (!requireNamespace("reticulate", quietly = TRUE)) install.packages("reticulate")
+  if (!requireNamespace("dotenv", quietly = TRUE)) install.packages("dotenv")
   library(readxl)
   library(writexl)
   library(reticulate)
@@ -44,7 +47,7 @@ excel_column_pseudonymizer_simple <- function(
   if (key_string == "") stop("가명화 키가 환경변수에서 읽히지 않았습니다.")
 
   pyffx <- import("pyffx")
-  KEY <- r_to_py(charToRaw(key_string)) # pyffx (파이썬) 패키지의 암호화 키(key= 인자)는 반드시 bytes 타입
+  KEY <- r_to_py(charToRaw(key_string))
 
   df <- readxl::read_excel(excel_path)
 
@@ -70,10 +73,15 @@ excel_column_pseudonymizer_simple <- function(
     }, FUN.VALUE=character(1))
 
     newcol <- paste0("P_", col)
-    df[[newcol]] <- pseudo_vals
-    idx <- which(names(df)==col)
-    names(df)[names(df)==newcol] <- newcol
-    df <- df[, c(names(df)[1:(idx-1)], newcol, names(df)[-c(1:idx, which(names(df)==newcol))])]
+    idx <- which(names(df) == col)
+    # 원래 컬럼을 삭제하고 그 자리에 P_컬럼 삽입
+    df <- df[ , setdiff(names(df), col), drop=FALSE]    # 원본 컬럼 삭제
+    # 컬럼 순서 새로 만들기
+    before <- if (idx == 1) character(0) else names(df)[1:(idx-1)]
+    after  <- if (idx > length(names(df))) character(0) else names(df)[idx:length(names(df))]
+    df <- cbind(df[, before, drop=FALSE],
+                setNames(data.frame(pseudo_vals, stringsAsFactors=FALSE), newcol),
+                df[, after, drop=FALSE])
   }
 
   outdir <- "data/pseudonymized"
